@@ -409,8 +409,9 @@ namespace EventListenerTools
 
                     // Create dropdownlist with 'pseudo entries' for the currently selected method at the top of the list followed by a blank line
                     var dropdownList = supportedMethods.Select(i => i.qualifiedMethodName).ToList();
+                    var selectedMethod = supportedMethods[selectedMethodId];
                     dropdownList.Insert(0, ""); // insert line
-                    dropdownList.Insert(0, selectedMethodId > -1 ? supportedMethods[selectedMethodId].fullMethodName : "No method");
+                    dropdownList.Insert(0, selectedMethodId > -1 ? selectedMethod.assemblyName.Split(",")[0] + "." + selectedMethod.fullMethodName : "No method");
 
                     // Store old selected method id case it isn't changed
                     var oldSelectedMethodId = selectedMethodId;
