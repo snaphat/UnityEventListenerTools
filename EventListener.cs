@@ -11,14 +11,6 @@ namespace EventListenerTools
 {
     public enum ListenerMethod
     {
-        None,
-
-        Awake,
-        Start,
-
-        OnEnable,
-        OnDisable,
-
         OnUse,
 
         OnBarkStart,
