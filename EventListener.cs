@@ -303,7 +303,7 @@ namespace EventListenerTools
                 }
 
                 // Call method
-                var behaviour = gameObject.GetComponentInChildren(Type.GetType(callback.assemblyName + ",Assembly-CSharp")) as MonoBehaviour;
+                var behaviour = (callback.objectReference as GameObject).GetComponentInChildren(Type.GetType(callback.assemblyName));
                 MethodInfo methodInfo = behaviour.GetType().GetMethod(callback.methodName, types);
                 methodInfo.Invoke(behaviour, arguments);
             }
@@ -570,6 +570,9 @@ namespace EventListenerTools
                         // Finish the full name signature
                         fullMethodName += ")";
 
+                        // Collect the first two pieces of the FQN
+                        var assemblyName = componentType.FullName + "," + componentType.Module.Assembly.GetName().Name;
+
                         // Create method description object
                         var supportedMethod = new CallbackDescription
                         {
@@ -577,7 +580,7 @@ namespace EventListenerTools
                             fullMethodName = fullMethodName,
                             qualifiedMethodName = componentType + "/" + fullMethodName[0] + "/" + fullMethodName,
                             parameterTypes = parameterTypes,
-                            assemblyName = componentType.FullName
+                            assemblyName = assemblyName
                         };
                         supportedMethods.Add(supportedMethod);
                     }
