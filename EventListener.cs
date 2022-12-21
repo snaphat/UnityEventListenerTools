@@ -303,9 +303,9 @@ namespace EventListenerTools
                 }
 
                 // Call method
-                var behaviour = (callback.objectReference as GameObject).GetComponentInChildren(Type.GetType(callback.assemblyName));
-                MethodInfo methodInfo = behaviour.GetType().GetMethod(callback.methodName, types);
-                methodInfo.Invoke(behaviour, arguments);
+                var component = (callback.objectReference as GameObject).GetComponentInChildren(Type.GetType(callback.assemblyName));
+                MethodInfo methodInfo = component.GetType().GetMethod(callback.methodName, types);
+                methodInfo.Invoke(component, arguments);
             }
         }
     }
