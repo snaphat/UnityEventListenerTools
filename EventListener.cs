@@ -574,7 +574,7 @@ namespace EventListenerTools
                         {
                             methodName = method.Name,
                             fullMethodName = fullMethodName,
-                            qualifiedMethodName = methodType + "/" + fullMethodName,
+                            qualifiedMethodName = methodType + "/" + fullMethodName[0] + "/" + fullMethodName,
                             parameterTypes = parameterTypes,
                             assemblyName = methodType.FullName
                         };
@@ -584,7 +584,7 @@ namespace EventListenerTools
                 }
             }
 
-            return supportedMethods;
+            return supportedMethods.OrderBy(x => x.fullMethodName, StringComparer.Ordinal).ToList();
         }
     }
 #endif
