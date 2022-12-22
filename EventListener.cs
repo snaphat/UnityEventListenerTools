@@ -143,7 +143,7 @@ namespace EventListenerTools
     class EventListener : MonoBehaviour
     {
         public ListenerMethod listener; // listener method
-        public string tagMatch;         // Tag Match check
+        public string tagMatch = "";    // Tag Match check
         public Callback[] callbacks;    // methods to call
 
         public void Awake()
@@ -443,7 +443,9 @@ namespace EventListenerTools
                 EditorGUILayout.PropertyField(m_Listener);
 
                 // Draw tag selector field
+                if (m_TagMatch.stringValue == "") m_TagMatch.stringValue = "Untagged";
                 m_TagMatch.stringValue = EditorGUILayout.TagField("Tag", m_TagMatch.stringValue);
+                if (m_TagMatch.stringValue == "Untagged") m_TagMatch.stringValue = "";
                 //EditorGUILayout.Space();
 
                 // Only rebuild list if something as changed (it isn't draggable otherwise)
