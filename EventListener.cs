@@ -1,42 +1,50 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using UnityEngine;
+using UnityEngine.Playables;
+using Object = UnityEngine.Object;
+
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditorInternal;
-using UnityEngine;
-using Object = UnityEngine.Object;
+#endif
 
 namespace EventListenerTools
 {
     public enum ListenerMethod
     {
+        // Listeners for Dialogue System for Unity (PixelCrushers) Messages
         OnUse,
-
         OnBarkStart,
         OnBarkEnd,
-
         OnConversationStart,
         OnConversationEnd,
-
         OnSequenceStart,
         OnSequenceEnd,
 
+        // Listeners for Unity Collider Messages
         OnTriggerStay,
         OnTriggerEnter,
         OnTriggerExit,
-
         OnCollisionStay,
         OnCollisionEnter,
         OnCollisionExit,
 
+        // Listeners for Unity Collider2D Messages
         OnTriggerStay2D,
         OnTriggerEnter2D,
         OnTriggerExit2D,
-
         OnCollisionStay2D,
         OnCollisionEnter2D,
-        OnCollisionExit2D
+        OnCollisionExit2D,
+
+        // Listeners for Unity PlayableDirector Events
+        OnPlayed, // play event
+        OnPaused, // paused event
+        OnStopped // stopped event
     }
 
     // For storing parsed method information in the editor
@@ -134,147 +142,242 @@ namespace EventListenerTools
 
     class EventListener : MonoBehaviour
     {
-
         public ListenerMethod listener; // listener method
         public string tagMatch;         // Tag Match check
         public Callback[] callbacks;    // methods to call
 
-        // Listener methods
+        public void Awake()
+        {
+            AddListener();
+
+            // PlayOnAwake/Play workaround bc played events are trigger before we registered ours if it woke up before
+            // us
+            if (listener == ListenerMethod.OnPlayed)
+            {
+                // if the playablegraph is playing and it just started then we need to invoke our callbacks
+                var director = GetComponent<PlayableDirector>();
+                if (director != null && director.playableGraph.IsValid() && director.playableGraph.IsPlaying()
+                    && director.time == director.initialTime)
+                {
+                    // Wait one frame to make sure all scene objects are initialized before invoking callbacks 
+                    IEnumerator DelayInvokeCallbacks()
+                    {
+                        yield return null;
+                        OnPlayed(director); // Manually call OnPlayed callback
+                        yield break;
+                    };
+                    StartCoroutine(DelayInvokeCallbacks());
+                }
+            }
+        }
+
+        // Add Event listener for PlayableDirector Events
+        public void AddListener()
+        {
+            var director = GetComponent<PlayableDirector>();
+            if (director != null)
+            {
+                RemoveListener();
+                if (listener == ListenerMethod.OnPlayed)
+                    director.played += OnPlayed;
+                else if (listener == ListenerMethod.OnPaused)
+                    director.paused += OnPaused;
+                else if (listener == ListenerMethod.OnStopped)
+                    director.stopped += OnStopped;
+            }
+        }
+
+        // Remove Event listener for PlayableDirector Events
+        public void RemoveListener()
+        {
+            var director = GetComponent<PlayableDirector>();
+            if (director != null)
+            {
+                director.played -= OnPlayed;
+                director.paused -= OnPaused;
+                director.stopped -= OnStopped;
+            }
+        }
+
+        // Message Listener for Dialogue System for Unity (PixelCrushers)
         public void OnUse(Transform actor)
         {
             if (listener == ListenerMethod.OnUse)
                 if (tagMatch == "" || actor.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
         }
 
+        // Message Listener for Dialogue System for Unity (PixelCrushers)
         public void OnBarkStart(Transform actor)
         {
             if (listener == ListenerMethod.OnBarkStart)
                 if (tagMatch == "" || actor.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
         }
 
+        // Message Listener for Dialogue System for Unity (PixelCrushers)
         public void OnBarkEnd(Transform actor)
         {
             if (listener == ListenerMethod.OnBarkEnd)
                 if (tagMatch == "" || actor.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
 
         }
 
+        // Message Listener for Dialogue System for Unity (PixelCrushers)
         public void OnConversationStart(Transform actor)
         {
             if (listener == ListenerMethod.OnConversationStart)
                 if (tagMatch == "" || actor.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
         }
 
+        // Message Listener for Dialogue System for Unity (PixelCrushers)
         public void OnConversationEnd(Transform actor)
         {
             if (listener == ListenerMethod.OnConversationEnd)
                 if (tagMatch == "" || actor.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
         }
 
+        // Message Listener for Dialogue System for Unity (PixelCrushers)
         public void OnSequenceStart(Transform actor)
         {
             if (listener == ListenerMethod.OnSequenceStart)
                 if (tagMatch == "" || actor.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
         }
 
+        // Message Listener for Dialogue System for Unity (PixelCrushers)
         public void OnSequenceEnd(Transform actor)
         {
             if (listener == ListenerMethod.OnSequenceEnd)
                 if (tagMatch == "" || actor.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
         }
 
+        // Message Listener for Unity Collider
         public void OnTriggerStay(Collider other)
         {
             if (listener == ListenerMethod.OnTriggerStay)
                 if (tagMatch == "" || other.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
         }
 
+        // Message Listener for Unity Collider
         public void OnTriggerEnter(Collider other)
         {
             if (listener == ListenerMethod.OnTriggerEnter)
                 if (tagMatch == "" || other.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
         }
 
+        // Message Listener for Unity Collider
         public void OnTriggerExit(Collider other)
         {
             if (listener == ListenerMethod.OnTriggerExit)
                 if (tagMatch == "" || other.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
         }
 
+        // Message Listener for Unity Collider
         public void OnCollisionStay(Collision collision)
         {
             if (listener == ListenerMethod.OnCollisionStay)
                 if (tagMatch == "" || collision.gameObject.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
         }
 
+        // Message Listener for Unity Collider
         public void OnCollisionEnter(Collision collision)
         {
             if (listener == ListenerMethod.OnCollisionEnter)
                 if (tagMatch == "" || collision.gameObject.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
         }
 
+        // Message Listener for Unity Collider
         public void OnCollisionExit(Collision collision)
         {
             if (listener == ListenerMethod.OnCollisionExit)
                 if (tagMatch == "" || collision.gameObject.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
         }
 
+        // Message Listener for Unity Collider2D
         public void OnTriggerStay2D(Collider2D other)
         {
             if (listener == ListenerMethod.OnTriggerStay2D)
                 if (tagMatch == "" || other.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
         }
 
+        // Message Listener for Unity Collider2D
         public void OnTriggerEnter2D(Collider2D other)
         {
             if (listener == ListenerMethod.OnTriggerEnter2D)
                 if (tagMatch == "" || other.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
         }
 
+        // Message Listener for Unity Collider2D
         public void OnTriggerExit2D(Collider2D other)
         {
             if (listener == ListenerMethod.OnTriggerEnter2D)
                 if (tagMatch == "" || other.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
         }
 
+        // Message Listener for Unity Collider2D
         public void OnCollisionStay2D(Collision2D collision)
         {
             if (listener == ListenerMethod.OnCollisionStay2D)
                 if (tagMatch == "" || collision.gameObject.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
         }
 
+        // Message Listener for Unity Collider2D
         public void OnCollisionEnter2D(Collision2D collision)
         {
             if (listener == ListenerMethod.OnCollisionEnter2D)
                 if (tagMatch == "" || collision.gameObject.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
         }
 
+        // Message Listener for Unity Collider2D
         public void OnCollisionExit2D(Collision2D collision)
         {
             if (listener == ListenerMethod.OnCollisionExit2D)
                 if (tagMatch == "" || collision.gameObject.tag == tagMatch)
-                    Trigger();
+                    InvokeCallbacks();
         }
 
-        public void Trigger()
+        // Event Listener for Unity PlayableDirector
+        public void OnPlayed(PlayableDirector director)
+        {
+            if (listener == ListenerMethod.OnPlayed)
+                if (tagMatch == "" || director.tag == tagMatch)
+                    InvokeCallbacks();
+        }
+
+        // Event Listener for Unity PlayableDirector
+        public void OnPaused(PlayableDirector director)
+        {
+            if (listener == ListenerMethod.OnPaused)
+                if (tagMatch == "" || director.tag == tagMatch)
+                    InvokeCallbacks();
+        }
+
+        // Event Listener for Unity PlayableDirector
+        public void OnStopped(PlayableDirector director)
+        {
+            if (listener == ListenerMethod.OnStopped)
+                if (tagMatch == "" || director.tag == tagMatch)
+                    InvokeCallbacks();
+        }
+
+        // Invokes callbacks directly
+        public void InvokeCallbacks()
         {
             if (callbacks == null) return;
 
