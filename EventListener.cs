@@ -91,55 +91,6 @@ namespace EventListenerTools
         public Argument[] arguments;
     }
 
-    // For uniquely identifying Stored SerializedProperty methods with found CallbackDescription methods using assembly name, method name, and argument types
-    public static class ListExtensions
-    {
-        public static int FindMethod(this IList<CallbackDescription> callbacks, SerializedProperty assemblyName, SerializedProperty methodName, SerializedProperty arguments)
-        {
-            // Iterate each callback method in list
-            for (int id = 0; id < callbacks.Count; id++)
-            {
-                var callback = callbacks[id];
-
-                // if num params, assembly name, or method name don't match continue to next callback
-                if (arguments.arraySize != callback.parameterTypes.Count || assemblyName.stringValue.Split(",")[0] != callback.assemblyName.Split(",")[0] || methodName.stringValue != callback.methodName)
-                    continue;
-
-                // Iterate each param type
-                bool isMatch = true;
-                int i;
-                for (i = 0; i < callback.parameterTypes.Count; i++)
-                {
-                    // Grab types
-                    var type = callback.parameterTypes[i];
-                    var argumentProperty = arguments.GetArrayElementAtIndex(i);
-                    SerializedProperty m_ParameterType = argumentProperty.FindPropertyRelative("parameterType");
-                    var type2 = m_ParameterType.enumValueIndex;
-
-                    // break early if no match
-                    if (type == typeof(bool) && type2 == (int)ParameterType.Bool)
-                        continue;
-                    else if (type == typeof(int) && type2 == (int)ParameterType.Int)
-                        continue;
-                    else if (type == typeof(float) && type2 == (int)ParameterType.Float)
-                        continue;
-                    else if (type == typeof(string) && type2 == (int)ParameterType.String)
-                        continue;
-                    else if ((type == typeof(object) || type.IsSubclassOf(typeof(Object))) && type2 == (int)ParameterType.Object)
-                        continue;
-                    else if (type.IsEnum && (type2 == (int)ParameterType.Enum || argumentProperty.FindPropertyRelative("String").stringValue.Split(",")[0] == type.FullName))
-                        continue;
-                    isMatch = false;
-                    break;
-                }
-
-                // if count match then method matches so return id
-                if (isMatch) return id;
-            }
-            return -1;
-        }
-    }
-
     class EventListener : MonoBehaviour
     {
         public ListenerMethod listener; // listener method
@@ -414,6 +365,55 @@ namespace EventListenerTools
     }
 
 #if UNITY_EDITOR
+    // For uniquely identifying Stored SerializedProperty methods with found CallbackDescription methods using assembly name, method name, and argument types
+    public static class ListExtensions
+    {
+        public static int FindMethod(this IList<CallbackDescription> callbacks, SerializedProperty assemblyName, SerializedProperty methodName, SerializedProperty arguments)
+        {
+            // Iterate each callback method in list
+            for (int id = 0; id < callbacks.Count; id++)
+            {
+                var callback = callbacks[id];
+
+                // if num params, assembly name, or method name don't match continue to next callback
+                if (arguments.arraySize != callback.parameterTypes.Count || assemblyName.stringValue.Split(",")[0] != callback.assemblyName.Split(",")[0] || methodName.stringValue != callback.methodName)
+                    continue;
+
+                // Iterate each param type
+                bool isMatch = true;
+                int i;
+                for (i = 0; i < callback.parameterTypes.Count; i++)
+                {
+                    // Grab types
+                    var type = callback.parameterTypes[i];
+                    var argumentProperty = arguments.GetArrayElementAtIndex(i);
+                    SerializedProperty m_ParameterType = argumentProperty.FindPropertyRelative("parameterType");
+                    var type2 = m_ParameterType.enumValueIndex;
+
+                    // break early if no match
+                    if (type == typeof(bool) && type2 == (int)ParameterType.Bool)
+                        continue;
+                    else if (type == typeof(int) && type2 == (int)ParameterType.Int)
+                        continue;
+                    else if (type == typeof(float) && type2 == (int)ParameterType.Float)
+                        continue;
+                    else if (type == typeof(string) && type2 == (int)ParameterType.String)
+                        continue;
+                    else if ((type == typeof(object) || type.IsSubclassOf(typeof(Object))) && type2 == (int)ParameterType.Object)
+                        continue;
+                    else if (type.IsEnum && (type2 == (int)ParameterType.Enum || argumentProperty.FindPropertyRelative("String").stringValue.Split(",")[0] == type.FullName))
+                        continue;
+                    isMatch = false;
+                    break;
+                }
+
+                // if count match then method matches so return id
+                if (isMatch) return id;
+            }
+            return -1;
+        }
+    }
+
     // Custom Inspector for creating EventListener
     [CustomEditor(typeof(EventListener)), CanEditMultipleObjects]
     public class TestInspector : Editor
