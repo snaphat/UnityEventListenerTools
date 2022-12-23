@@ -1,4 +1,4 @@
-# UnityEventListenerTools
+# <img src=Icon.png width=32> UnityEventListenerTools
 
 Unity Plugin that adds the following features:
 
