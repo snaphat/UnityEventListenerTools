@@ -274,7 +274,7 @@ namespace EventListenerTools
         // Message Listener for Unity Collider2D
         public void OnTriggerExit2D(Collider2D other)
         {
-            if (listener == ListenerMethod.OnTriggerEnter2D)
+            if (listener == ListenerMethod.OnTriggerExit2D)
                 if (tagMatch == "" || other.tag == tagMatch)
                     InvokeCallbacks();
         }
