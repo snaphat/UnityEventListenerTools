@@ -416,7 +416,7 @@ namespace EventListenerTools
 
     // Custom Inspector for creating EventListener
     [CustomEditor(typeof(EventListener)), CanEditMultipleObjects]
-    public class TestInspector : Editor
+    public class EventListenerEditor : Editor
     {
         SerializedProperty m_Listener;
         SerializedProperty m_TagMatch;
