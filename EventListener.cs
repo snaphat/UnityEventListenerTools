@@ -16,7 +16,7 @@ namespace EventListenerTools
 {
     public enum ListenerMethod
     {
-        // Listeners for Monobehaviours 
+        // Listeners for MonoBehaviours 
         Awake,
         Start,
         OnEnable,
@@ -139,7 +139,7 @@ namespace EventListenerTools
             }
         }
 
-        // Message Listeners for Monobehaviours
+        // Message Listeners for MonoBehaviours
         public void Awake()
         {
             AddListener();
