@@ -56,11 +56,12 @@ namespace EventListenerTools
     // For storing parsed method information in the editor
     public class CallbackDescription
     {
-        public string assemblyName;        // Object type of the method
-        public string methodName;          // The short name of the method
-        public string fullMethodName;      // The name of the method with parameters: e.g.: Foo(arg_type)
-        public string qualifiedMethodName; // The name of the class + method + parameters: e.g. Bar.Foo(arg_type)
-        public List<Type> parameterTypes;  // none, bool, int, float, string, Object, Enum
+        public string assemblyName;         // Object type of the method
+        public string methodName;           // The short name of the method
+        public string fullMethodName;       // The name of the method with parameters: e.g.: Foo(arg_type)
+        public string qualifiedMethodName;  // The name of the class + method + parameters: e.g. Bar.Foo(arg_type)
+        public List<Type> parameterTypes;   // none, bool, int, float, string, Object, Enum
+        public ArrayList defaultParameters; // default value for the given parameter
     }
 
     public enum ParameterType
@@ -454,12 +455,15 @@ namespace EventListenerTools
             {
                 var callbackDescription = cache.supportedMethods.ElementAt(cache.selectedMethodId);
 
+                // Detect method change in order to initialize default parameters
+                var methodChanged = m_MethodName.stringValue != callbackDescription.methodName;
+
                 // Fillout assembly and method name properties using the selected id
                 m_AssemblyName.stringValue = callbackDescription.assemblyName;
                 m_MethodName.stringValue = callbackDescription.methodName;
 
                 // Draw each argument
-                DrawArguments(line, element, callbackDescription);
+                DrawArguments(line, element, callbackDescription, methodChanged);
             }
 
             // Cache object
@@ -467,7 +471,7 @@ namespace EventListenerTools
         }
 
         // Create UI elements for the given parameter types of a methods arguments
-        void DrawArguments(Rect rect, SerializedProperty element, CallbackDescription callbackDescription)
+        void DrawArguments(Rect rect, SerializedProperty element, CallbackDescription callbackDescription, bool initialize)
         {
             // Find the amount of user enterable arguments to compute UI entry box sizes
             int enterableArgCount = 0;
@@ -488,6 +492,7 @@ namespace EventListenerTools
             for (var i = 0; i < m_Arguments.arraySize; i++)
             {
                 var type = callbackDescription.parameterTypes[i];
+                var defaultValue = callbackDescription.defaultParameters[i];
                 var argumentProperty = m_Arguments.GetArrayElementAtIndex(i);
                 SerializedProperty m_ParameterType = argumentProperty.FindPropertyRelative("parameterType");
 
@@ -495,37 +500,47 @@ namespace EventListenerTools
                 if (type == typeof(bool))
                 {
                     m_ParameterType.enumValueIndex = (int)ParameterType.Bool;
-                    EditorGUI.PropertyField(rect, argumentProperty.FindPropertyRelative("Bool"), GUIContent.none);
+                    var property = argumentProperty.FindPropertyRelative("Bool");
+                    if (initialize && defaultValue.GetType() != typeof(DBNull)) property.boolValue = (bool)defaultValue;
+                    EditorGUI.PropertyField(rect, property, GUIContent.none);
                 }
                 else if (type == typeof(int))
                 {
                     m_ParameterType.enumValueIndex = (int)ParameterType.Int;
-                    EditorGUI.PropertyField(rect, argumentProperty.FindPropertyRelative("Int"), GUIContent.none);
+                    var property = argumentProperty.FindPropertyRelative("Int");
+                    if (initialize && defaultValue.GetType() != typeof(DBNull)) property.intValue = (int)defaultValue;
+                    EditorGUI.PropertyField(rect, property, GUIContent.none);
                 }
                 else if (type == typeof(float))
                 {
                     m_ParameterType.enumValueIndex = (int)ParameterType.Float;
-                    EditorGUI.PropertyField(rect, argumentProperty.FindPropertyRelative("Float"), GUIContent.none);
+                    var property = argumentProperty.FindPropertyRelative("Float");
+                    if (initialize && defaultValue.GetType() != typeof(DBNull)) property.floatValue = (float)defaultValue;
+                    EditorGUI.PropertyField(rect, property, GUIContent.none);
                 }
                 else if (type == typeof(string))
                 {
                     m_ParameterType.enumValueIndex = (int)ParameterType.String;
-                    EditorGUI.PropertyField(rect, argumentProperty.FindPropertyRelative("String"), GUIContent.none);
+                    var property = argumentProperty.FindPropertyRelative("String");
+                    if (initialize && defaultValue.GetType() != typeof(DBNull)) property.stringValue = (string)defaultValue;
+                    EditorGUI.PropertyField(rect, property, GUIContent.none);
                 }
                 else if (type == typeof(object) || type.IsSubclassOf(typeof(Object)))
                 {
                     m_ParameterType.enumValueIndex = (int)ParameterType.Object;
-                    var objectProperty = argumentProperty.FindPropertyRelative("Object");
-                    var obj = EditorGUI.ObjectField(rect, objectProperty.objectReferenceValue, type, true);
-                    objectProperty.objectReferenceValue = obj;
+                    var property = argumentProperty.FindPropertyRelative("Object");
+                    if (initialize && defaultValue.GetType() != typeof(DBNull)) property.objectReferenceValue = (Object)defaultValue;
+                    var obj = EditorGUI.ObjectField(rect, property.objectReferenceValue, type, true);
+                    property.objectReferenceValue = obj;
                 }
                 else if (type.IsEnum)
                 {
                     m_ParameterType.enumValueIndex = (int)ParameterType.Enum;
                     var intProperty = argumentProperty.FindPropertyRelative("Int");
                     var stringProperty = argumentProperty.FindPropertyRelative("String");
+                    if (initialize && defaultValue.GetType() != typeof(DBNull)) intProperty.intValue = (int)defaultValue;
                     intProperty.intValue = (int)(object)EditorGUI.EnumPopup(rect, (Enum)Enum.ToObject(type, intProperty.intValue)); // Parse as enum type
-                    stringProperty.stringValue = type.FullName; // store full type name
+                    stringProperty.stringValue = type.FullName; // store full type name in string
                 }
 
                 // Update field position
@@ -568,6 +583,7 @@ namespace EventListenerTools
 
                         var parameters = method.GetParameters();    // get parameters
                         List<Type> parameterTypes = new();          // create empty parameter list
+                        ArrayList defaultValues = new();            // create empty default arguments list
                         string fullMethodName = method.Name + "(";  // start full method name signature
                         bool validMethod = true;                    // mark the method as valid until proven otherwise
 
@@ -594,6 +610,7 @@ namespace EventListenerTools
 
                             // Add parameter and update full method name with parameter type and name
                             parameterTypes.Add(parameter.ParameterType);
+                            defaultValues.Add(parameter.DefaultValue);
                             fullMethodName += strType + " " + parameter.Name;
                         }
 
@@ -613,6 +630,7 @@ namespace EventListenerTools
                             fullMethodName = fullMethodName,
                             qualifiedMethodName = itemType + "/" + fullMethodName[0] + "/" + fullMethodName,
                             parameterTypes = parameterTypes,
+                            defaultParameters = defaultValues,
                             assemblyName = assemblyName
                         };
                         supportedMethods.Add(supportedMethod);
