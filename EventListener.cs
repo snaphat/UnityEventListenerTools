@@ -301,10 +301,21 @@ namespace EventListenerTools
     [CustomEditor(typeof(EventListener)), CanEditMultipleObjects]
     public class EventListenerEditor : Editor
     {
+        // Cached data for speeding up editor
+        class EditorCache
+        {
+            public Object obj; // selected game object for a given reorderable list entry
+            public List<CallbackDescription> supportedMethods; // supported methods for a given reorderable list entry
+            public int selectedMethodId; // selected id for a given reorderable list entry
+            public string[] dropdown; // dropdown for a given reorderable list entry
+        }
+        Dictionary<int, EditorCache> editorCache;
+        ReorderableList cachedMethodList; // object + method pairs in a reorderable list
+
+        // Properties
         SerializedProperty m_Listener;
         SerializedProperty m_TagMatch;
         SerializedProperty m_Callbacks;
-        ReorderableList list;
 
         // Get serialized object properties (for UI)
         public void OnEnable()
@@ -332,15 +343,19 @@ namespace EventListenerTools
                 //EditorGUILayout.Space();
 
                 // Only rebuild list if something as changed (it isn't draggable otherwise)
-                list ??= new ReorderableList(serializedObject, m_Callbacks, true, true, true, true)
+                if (cachedMethodList == null)
                 {
-                    elementHeightCallback = GetElementHeight,
-                    drawElementCallback = DrawMethodAndArguments,
-                    drawHeaderCallback = delegate (Rect rect) { EditorGUI.LabelField(rect, "Object Methods"); }
-                };
+                    cachedMethodList = new ReorderableList(serializedObject, m_Callbacks, true, true, true, true)
+                    {
+                        elementHeightCallback = GetElementHeight,
+                        drawElementCallback = DrawMethodAndArguments,
+                        drawHeaderCallback = delegate (Rect rect) { EditorGUI.LabelField(rect, "Object Methods"); }
+                    };
+                    editorCache = new();
+                }
 
                 // Layout reorderable list
-                list.DoLayoutList();
+                cachedMethodList.DoLayoutList();
 
                 // apply changes
                 if (changeScope.changed) serializedObject.ApplyModifiedProperties();
@@ -351,7 +366,7 @@ namespace EventListenerTools
         float GetElementHeight(int index)
         {
             // Retrieve element (elements are added when + is clicked in reorderable list UI)
-            SerializedProperty element = list.serializedProperty.GetArrayElementAtIndex(index);
+            SerializedProperty element = cachedMethodList.serializedProperty.GetArrayElementAtIndex(index);
 
             // Retrieve element properties
             SerializedProperty m_ObjectReference = element.FindPropertyRelative("objectReference");
@@ -370,7 +385,7 @@ namespace EventListenerTools
             Rect line = new(rect.x, rect.y + 4, rect.width, EditorGUIUtility.singleLineHeight);
 
             // Retrieve element (elements are added when + is clicked in reorderable list UI)
-            SerializedProperty element = list.serializedProperty.GetArrayElementAtIndex(index);
+            SerializedProperty element = cachedMethodList.serializedProperty.GetArrayElementAtIndex(index);
 
             // Retrieve element properties
             SerializedProperty m_ObjectReference = element.FindPropertyRelative("objectReference");
@@ -378,58 +393,77 @@ namespace EventListenerTools
             SerializedProperty m_MethodName = element.FindPropertyRelative("methodName");
             SerializedProperty m_Arguments = element.FindPropertyRelative("arguments");
 
-            var obj = EditorGUI.ObjectField(line, m_ObjectReference.objectReferenceValue, typeof(Object), true) as Object;
-            line.y += EditorGUIUtility.singleLineHeight + 2;
-            if (obj != null)
-            {
-                m_ObjectReference.objectReferenceValue = obj;
+            // Initialize cache for this index if not initialized
+            if (!editorCache.ContainsKey(index)) editorCache.Add(index, new());
+            var cache = editorCache[index];
 
-                var supportedMethods = CollectSupportedMethods(obj).ToList();
+            // Draw object property field
+            var obj = EditorGUI.ObjectField(line, m_ObjectReference.objectReferenceValue, typeof(Object), true);
+            line.y += EditorGUIUtility.singleLineHeight + 2;
+
+            // return if the object is null. 
+            if (obj == null) return;
+
+            // Otherwise assign object.
+            m_ObjectReference.objectReferenceValue = obj;
+
+            // Collected supported methods and generate dropdown if the object type has changed
+            if (obj != cache.obj)
+            {
+                // Update supported methods
+                cache.supportedMethods = CollectSupportedMethods(obj);
 
                 // Get current method ID based off of stored name (index really)
-                var selectedMethodId = supportedMethods.FindMethod(m_AssemblyName, m_MethodName, m_Arguments);
+                cache.selectedMethodId = cache.supportedMethods.FindMethod(m_AssemblyName, m_MethodName, m_Arguments);
 
-                // Draw popup (dropdown box)
-                var previousMixedValue = EditorGUI.showMixedValue;
-                {
-                    GUIStyle style = EditorStyles.popup;
-                    style.richText = true;
-
-                    // Create dropdownlist with 'pseudo entries' for the currently selected method at the top of the list followed by a blank line
-                    var dropdownList = supportedMethods.Select(i => i.qualifiedMethodName).ToList();
-                    CallbackDescription selectedMethod = selectedMethodId > -1 ? supportedMethods[selectedMethodId] : null;
-                    dropdownList.Insert(0, ""); // insert line
-                    dropdownList.Insert(0, selectedMethodId > -1 ? selectedMethod.assemblyName.Split(",")[0] + "." + selectedMethod.fullMethodName : "No method");
-
-                    // Store old selected method id case it isn't changed
-                    var oldSelectedMethodId = selectedMethodId;
-                    selectedMethodId = EditorGUI.Popup(line, 0, dropdownList.ToArray(), style);
-
-                    // Update field position
-                    line.y += EditorGUIUtility.singleLineHeight + 2;
-
-                    // Normalize selection
-                    if (selectedMethodId == 0)
-                        selectedMethodId = oldSelectedMethodId; // No selection so restore actual method id
-                    else
-                        selectedMethodId -= 2; // normalize to get actual Id (-2 for the two 'pseudo entries'
-                }
-
-                EditorGUI.showMixedValue = previousMixedValue;
-
-                // If selected method is valid then try to draw parameters
-                if (selectedMethodId > -1 && selectedMethodId < supportedMethods.Count)
-                {
-                    var callbackDescription = supportedMethods.ElementAt(selectedMethodId);
-
-                    // Fillout assembly and method name properties using the selected id
-                    m_AssemblyName.stringValue = callbackDescription.assemblyName;
-                    m_MethodName.stringValue = callbackDescription.methodName;
-
-                    // Draw each argument
-                    DrawArguments(line, element, callbackDescription);
-                }
+                // Create dropdown
+                var qualifiedMethodNames = cache.supportedMethods.Select(i => i.qualifiedMethodName);
+                var dropdownList = new List<string>() { "", "" }; // Add 2x blank line entries
+                dropdownList.AddRange(qualifiedMethodNames);
+                cache.dropdown = dropdownList.ToArray();
             }
+
+            // Draw popup (dropdown box)
+            var previousMixedValue = EditorGUI.showMixedValue;
+            {
+                GUIStyle style = EditorStyles.popup;
+                style.richText = true;
+
+                // Create dropdownlist with 'pseudo entry' for the currently selected method at the top of the list
+                CallbackDescription selectedMethod = cache.selectedMethodId > -1 ? cache.supportedMethods[cache.selectedMethodId] : null;
+                cache.dropdown[0] = cache.selectedMethodId > -1 ? selectedMethod.assemblyName.Split(",")[0] + "." + selectedMethod.fullMethodName : "No method";
+
+                // Store old selected method id case it isn't changed
+                var oldSelectedMethodId = cache.selectedMethodId;
+                cache.selectedMethodId = EditorGUI.Popup(line, 0, cache.dropdown, style);
+
+                // Update field position
+                line.y += EditorGUIUtility.singleLineHeight + 2;
+
+                // Normalize selection
+                if (cache.selectedMethodId == 0)
+                    cache.selectedMethodId = oldSelectedMethodId; // No selection so restore actual method id
+                else
+                    cache.selectedMethodId -= 2; // normalize to get actual Id (-2 for the two 'pseudo entries'
+            }
+
+            EditorGUI.showMixedValue = previousMixedValue;
+
+            // If selected method is valid then try to draw parameters
+            if (cache.selectedMethodId > -1 && cache.selectedMethodId < cache.supportedMethods.Count)
+            {
+                var callbackDescription = cache.supportedMethods.ElementAt(cache.selectedMethodId);
+
+                // Fillout assembly and method name properties using the selected id
+                m_AssemblyName.stringValue = callbackDescription.assemblyName;
+                m_MethodName.stringValue = callbackDescription.methodName;
+
+                // Draw each argument
+                DrawArguments(line, element, callbackDescription);
+            }
+
+            // Cache object
+            cache.obj = obj;
         }
 
         // Create UI elements for the given parameter types of a methods arguments
@@ -500,10 +534,10 @@ namespace EventListenerTools
         }
 
         // Helper method for retrieving method signatures from an Object
-        public static IEnumerable<CallbackDescription> CollectSupportedMethods(Object obj)
+        public static List<CallbackDescription> CollectSupportedMethods(Object obj)
         {
             // return if object is null
-            if (obj == null) return Enumerable.Empty<CallbackDescription>();
+            if (obj == null) return Enumerable.Empty<CallbackDescription>().ToList();
 
             // Create a list to fill with supported methods
             List<CallbackDescription> supportedMethods = new();
