@@ -16,6 +16,12 @@ namespace EventListenerTools
 {
     public enum ListenerMethod
     {
+        // Listeners for Monobehaviours 
+        Awake,
+        Start,
+        OnEnable,
+        OnDisable,
+
         // Listeners for Dialogue System for Unity (PixelCrushers) Messages
         OnUse,
         OnBarkStart,
@@ -105,32 +111,6 @@ namespace EventListenerTools
                     InvokeCallbacks();
         }
 
-        // Awake logic
-        public void Awake()
-        {
-            AddListener();
-
-            // PlayOnAwake/Play workaround bc played events are trigger before we registered ours if it woke up before
-            // us
-            if (listener == ListenerMethod.OnPlayed)
-            {
-                // if the playablegraph is playing and it just started then we need to invoke our callbacks
-                var director = GetComponent<PlayableDirector>();
-                if (director != null && director.playableGraph.IsValid() && director.playableGraph.IsPlaying()
-                    && director.time == director.initialTime)
-                {
-                    // Wait one frame to make sure all scene objects are initialized before invoking callbacks 
-                    IEnumerator DelayInvokeCallbacks()
-                    {
-                        yield return null;
-                        OnPlayed(director); // Manually call OnPlayed callback
-                        yield break;
-                    };
-                    StartCoroutine(DelayInvokeCallbacks());
-                }
-            }
-        }
-
         // Add Event listener for PlayableDirector Events
         public void AddListener()
         {
@@ -159,7 +139,38 @@ namespace EventListenerTools
             }
         }
 
-        // Message Listener for Dialogue System for Unity (PixelCrushers)
+        // Message Listeners for Monobehaviours
+        public void Awake()
+        {
+            AddListener();
+
+            // PlayOnAwake/Play workaround bc played events are trigger before we registered ours if it woke up before
+            // us
+            if (listener == ListenerMethod.OnPlayed)
+            {
+                // if the playablegraph is playing and it just started then we need to invoke our callbacks
+                var director = GetComponent<PlayableDirector>();
+                if (director != null && director.playableGraph.IsValid() && director.playableGraph.IsPlaying()
+                    && director.time == director.initialTime)
+                {
+                    // Wait one frame to make sure all scene objects are initialized before invoking callbacks 
+                    IEnumerator DelayInvokeCallbacks()
+                    {
+                        yield return null;
+                        OnPlayed(director); // Manually call OnPlayed callback
+                        yield break;
+                    };
+                    StartCoroutine(DelayInvokeCallbacks());
+                }
+            }
+
+            CheckMatch(ListenerMethod.Awake, null);
+        }
+        public void Start() { CheckMatch(ListenerMethod.Start, null); }
+        public void OnEnable() { CheckMatch(ListenerMethod.OnEnable, null); }
+        public void OnDisable() { CheckMatch(ListenerMethod.OnDisable, null); }
+
+        // Message Listeners for Dialogue System for Unity (PixelCrushers)
         public void OnUse(Transform actor) { CheckMatch(ListenerMethod.OnUse, actor.tag); }
         public void OnBarkStart(Transform actor) { CheckMatch(ListenerMethod.OnBarkStart, actor.tag); }
         public void OnBarkEnd(Transform actor) { CheckMatch(ListenerMethod.OnBarkEnd, actor.tag); }
@@ -168,7 +179,7 @@ namespace EventListenerTools
         public void OnSequenceStart(Transform actor) { CheckMatch(ListenerMethod.OnSequenceStart, actor.tag); }
         public void OnSequenceEnd(Transform actor) { CheckMatch(ListenerMethod.OnSequenceEnd, actor.tag); }
 
-        // Message Listener for Unity Collider
+        // Message Listeners for Unity Collider
         public void OnTriggerStay(Collider other) { CheckMatch(ListenerMethod.OnTriggerStay, other.tag); }
         public void OnTriggerEnter(Collider other) { CheckMatch(ListenerMethod.OnTriggerEnter, other.tag); }
         public void OnTriggerExit(Collider other) { CheckMatch(ListenerMethod.OnTriggerExit, other.tag); }
@@ -176,7 +187,7 @@ namespace EventListenerTools
         public void OnCollisionEnter(Collision collision) { CheckMatch(ListenerMethod.OnCollisionEnter, collision.gameObject.tag); }
         public void OnCollisionExit(Collision collision) { CheckMatch(ListenerMethod.OnCollisionExit, collision.gameObject.tag); }
 
-        // Message Listener for Unity Collider2D
+        // Message Listeners for Unity Collider2D
         public void OnTriggerStay2D(Collider2D other) { CheckMatch(ListenerMethod.OnTriggerStay2D, other.gameObject.tag); }
         public void OnTriggerEnter2D(Collider2D other) { CheckMatch(ListenerMethod.OnTriggerEnter2D, other.gameObject.tag); }
         public void OnTriggerExit2D(Collider2D other) { CheckMatch(ListenerMethod.OnTriggerExit2D, other.gameObject.tag); }
@@ -184,7 +195,7 @@ namespace EventListenerTools
         public void OnCollisionEnter2D(Collision2D collision) { CheckMatch(ListenerMethod.OnCollisionEnter2D, collision.gameObject.tag); }
         public void OnCollisionExit2D(Collision2D collision) { CheckMatch(ListenerMethod.OnCollisionExit2D, collision.gameObject.tag); }
 
-        // Event Listener for Unity PlayableDirector
+        // Event Listeners for Unity PlayableDirector
         public void OnPlayed(PlayableDirector director) { CheckMatch(ListenerMethod.OnPlayed, director.tag); }
         public void OnPaused(PlayableDirector director) { CheckMatch(ListenerMethod.OnPaused, director.tag); }
         public void OnStopped(PlayableDirector director) { CheckMatch(ListenerMethod.OnStopped, director.tag); }
