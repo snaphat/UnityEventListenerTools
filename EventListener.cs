@@ -107,7 +107,7 @@ namespace EventListenerTools
         public void CheckMatch(ListenerMethod listener, Transform actor)
         {
             if (this.listener == listener)
-                if (tagMatch == "" || tagMatch == actor.tag)
+                if (tagMatch == "" || (actor != null && tagMatch == actor.tag))
                     InvokeCallbacks();
         }
 
@@ -144,8 +144,7 @@ namespace EventListenerTools
         {
             AddListener();
 
-            // PlayOnAwake/Play workaround bc played events are trigger before we registered ours if it woke up before
-            // us
+            // PlayOnAwake/Play workaround bc played events are trigger before we registered ours if it woke up before us
             if (listener == ListenerMethod.OnPlayed)
             {
                 // if the playablegraph is playing and it just started then we need to invoke our callbacks
