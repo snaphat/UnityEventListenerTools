@@ -5,6 +5,11 @@ Unity Plugin that adds the following features:
 * The ability to listen for messages and events on game objects and invoke multi-parameter method calls without writing custom scripts
 
 ## Support for the following callbacks
+* [Unity MonoBehaviour](https://docs.unity3d.com/ScriptReference/MonoBehaviour.html) Messages
+  * Awake
+  * Start
+  * OnEnable
+  * OnDisable
 * [Dialogue System for Unity (PixelCrushers)](https://www.pixelcrushers.com/dialogue-system/) Messages
   * OnUse,
   * OnBarkStart,
