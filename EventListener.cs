@@ -524,8 +524,8 @@ namespace EventListenerTools
                 // Loop over type for derived type up the entire inheritence hierarchy 
                 while (itemType != null)
                 {
-                    // Get methods for class type. Include instance methods if the type is a game object
-                    var methods = itemType.GetMethods((item is GameObject ? BindingFlags.Instance : 0) | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                    // Get methods for class type. Include instance methods if the type is a game object or component
+                    var methods = itemType.GetMethods((item is GameObject || item is Component ? BindingFlags.Instance : 0) | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
 
                     foreach (var method in methods)
                     {
