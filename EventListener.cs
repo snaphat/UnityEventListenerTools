@@ -97,6 +97,15 @@ namespace EventListenerTools
         public string tagMatch = "";    // Tag Match check
         public Callback[] callbacks;    // methods to call
 
+        // Check logic for each listener and tag combination
+        public void CheckMatch(ListenerMethod listener, string tag)
+        {
+            if (this.listener == listener)
+                if (tagMatch == "" || tagMatch == tag)
+                    InvokeCallbacks();
+        }
+
+        // Awake logic
         public void Awake()
         {
             AddListener();
@@ -151,181 +160,34 @@ namespace EventListenerTools
         }
 
         // Message Listener for Dialogue System for Unity (PixelCrushers)
-        public void OnUse(Transform actor)
-        {
-            if (listener == ListenerMethod.OnUse)
-                if (tagMatch == "" || actor.tag == tagMatch)
-                    InvokeCallbacks();
-        }
-
-        // Message Listener for Dialogue System for Unity (PixelCrushers)
-        public void OnBarkStart(Transform actor)
-        {
-            if (listener == ListenerMethod.OnBarkStart)
-                if (tagMatch == "" || actor.tag == tagMatch)
-                    InvokeCallbacks();
-        }
-
-        // Message Listener for Dialogue System for Unity (PixelCrushers)
-        public void OnBarkEnd(Transform actor)
-        {
-            if (listener == ListenerMethod.OnBarkEnd)
-                if (tagMatch == "" || actor.tag == tagMatch)
-                    InvokeCallbacks();
-
-        }
-
-        // Message Listener for Dialogue System for Unity (PixelCrushers)
-        public void OnConversationStart(Transform actor)
-        {
-            if (listener == ListenerMethod.OnConversationStart)
-                if (tagMatch == "" || actor.tag == tagMatch)
-                    InvokeCallbacks();
-        }
-
-        // Message Listener for Dialogue System for Unity (PixelCrushers)
-        public void OnConversationEnd(Transform actor)
-        {
-            if (listener == ListenerMethod.OnConversationEnd)
-                if (tagMatch == "" || actor.tag == tagMatch)
-                    InvokeCallbacks();
-        }
-
-        // Message Listener for Dialogue System for Unity (PixelCrushers)
-        public void OnSequenceStart(Transform actor)
-        {
-            if (listener == ListenerMethod.OnSequenceStart)
-                if (tagMatch == "" || actor.tag == tagMatch)
-                    InvokeCallbacks();
-        }
-
-        // Message Listener for Dialogue System for Unity (PixelCrushers)
-        public void OnSequenceEnd(Transform actor)
-        {
-            if (listener == ListenerMethod.OnSequenceEnd)
-                if (tagMatch == "" || actor.tag == tagMatch)
-                    InvokeCallbacks();
-        }
+        public void OnUse(Transform actor) { CheckMatch(ListenerMethod.OnUse, actor.tag); }
+        public void OnBarkStart(Transform actor) { CheckMatch(ListenerMethod.OnBarkStart, actor.tag); }
+        public void OnBarkEnd(Transform actor) { CheckMatch(ListenerMethod.OnBarkEnd, actor.tag); }
+        public void OnConversationStart(Transform actor) { CheckMatch(ListenerMethod.OnConversationStart, actor.tag); }
+        public void OnConversationEnd(Transform actor) { CheckMatch(ListenerMethod.OnConversationEnd, actor.tag); }
+        public void OnSequenceStart(Transform actor) { CheckMatch(ListenerMethod.OnSequenceStart, actor.tag); }
+        public void OnSequenceEnd(Transform actor) { CheckMatch(ListenerMethod.OnSequenceEnd, actor.tag); }
 
         // Message Listener for Unity Collider
-        public void OnTriggerStay(Collider other)
-        {
-            if (listener == ListenerMethod.OnTriggerStay)
-                if (tagMatch == "" || other.tag == tagMatch)
-                    InvokeCallbacks();
-        }
-
-        // Message Listener for Unity Collider
-        public void OnTriggerEnter(Collider other)
-        {
-            if (listener == ListenerMethod.OnTriggerEnter)
-                if (tagMatch == "" || other.tag == tagMatch)
-                    InvokeCallbacks();
-        }
-
-        // Message Listener for Unity Collider
-        public void OnTriggerExit(Collider other)
-        {
-            if (listener == ListenerMethod.OnTriggerExit)
-                if (tagMatch == "" || other.tag == tagMatch)
-                    InvokeCallbacks();
-        }
-
-        // Message Listener for Unity Collider
-        public void OnCollisionStay(Collision collision)
-        {
-            if (listener == ListenerMethod.OnCollisionStay)
-                if (tagMatch == "" || collision.gameObject.tag == tagMatch)
-                    InvokeCallbacks();
-        }
-
-        // Message Listener for Unity Collider
-        public void OnCollisionEnter(Collision collision)
-        {
-            if (listener == ListenerMethod.OnCollisionEnter)
-                if (tagMatch == "" || collision.gameObject.tag == tagMatch)
-                    InvokeCallbacks();
-        }
-
-        // Message Listener for Unity Collider
-        public void OnCollisionExit(Collision collision)
-        {
-            if (listener == ListenerMethod.OnCollisionExit)
-                if (tagMatch == "" || collision.gameObject.tag == tagMatch)
-                    InvokeCallbacks();
-        }
+        public void OnTriggerStay(Collider other) { CheckMatch(ListenerMethod.OnTriggerStay, other.tag); }
+        public void OnTriggerEnter(Collider other) { CheckMatch(ListenerMethod.OnTriggerEnter, other.tag); }
+        public void OnTriggerExit(Collider other) { CheckMatch(ListenerMethod.OnTriggerExit, other.tag); }
+        public void OnCollisionStay(Collision collision) { CheckMatch(ListenerMethod.OnCollisionStay, collision.gameObject.tag); }
+        public void OnCollisionEnter(Collision collision) { CheckMatch(ListenerMethod.OnCollisionEnter, collision.gameObject.tag); }
+        public void OnCollisionExit(Collision collision) { CheckMatch(ListenerMethod.OnCollisionExit, collision.gameObject.tag); }
 
         // Message Listener for Unity Collider2D
-        public void OnTriggerStay2D(Collider2D other)
-        {
-            if (listener == ListenerMethod.OnTriggerStay2D)
-                if (tagMatch == "" || other.tag == tagMatch)
-                    InvokeCallbacks();
-        }
-
-        // Message Listener for Unity Collider2D
-        public void OnTriggerEnter2D(Collider2D other)
-        {
-            if (listener == ListenerMethod.OnTriggerEnter2D)
-                if (tagMatch == "" || other.tag == tagMatch)
-                    InvokeCallbacks();
-        }
-
-        // Message Listener for Unity Collider2D
-        public void OnTriggerExit2D(Collider2D other)
-        {
-            if (listener == ListenerMethod.OnTriggerExit2D)
-                if (tagMatch == "" || other.tag == tagMatch)
-                    InvokeCallbacks();
-        }
-
-        // Message Listener for Unity Collider2D
-        public void OnCollisionStay2D(Collision2D collision)
-        {
-            if (listener == ListenerMethod.OnCollisionStay2D)
-                if (tagMatch == "" || collision.gameObject.tag == tagMatch)
-                    InvokeCallbacks();
-        }
-
-        // Message Listener for Unity Collider2D
-        public void OnCollisionEnter2D(Collision2D collision)
-        {
-            if (listener == ListenerMethod.OnCollisionEnter2D)
-                if (tagMatch == "" || collision.gameObject.tag == tagMatch)
-                    InvokeCallbacks();
-        }
-
-        // Message Listener for Unity Collider2D
-        public void OnCollisionExit2D(Collision2D collision)
-        {
-            if (listener == ListenerMethod.OnCollisionExit2D)
-                if (tagMatch == "" || collision.gameObject.tag == tagMatch)
-                    InvokeCallbacks();
-        }
+        public void OnTriggerStay2D(Collider2D other) { CheckMatch(ListenerMethod.OnTriggerStay2D, other.gameObject.tag); }
+        public void OnTriggerEnter2D(Collider2D other) { CheckMatch(ListenerMethod.OnTriggerEnter2D, other.gameObject.tag); }
+        public void OnTriggerExit2D(Collider2D other) { CheckMatch(ListenerMethod.OnTriggerExit2D, other.gameObject.tag); }
+        public void OnCollisionStay2D(Collision2D collision) { CheckMatch(ListenerMethod.OnCollisionStay2D, collision.gameObject.tag); }
+        public void OnCollisionEnter2D(Collision2D collision) { CheckMatch(ListenerMethod.OnCollisionEnter2D, collision.gameObject.tag); }
+        public void OnCollisionExit2D(Collision2D collision) { CheckMatch(ListenerMethod.OnCollisionExit2D, collision.gameObject.tag); }
 
         // Event Listener for Unity PlayableDirector
-        public void OnPlayed(PlayableDirector director)
-        {
-            if (listener == ListenerMethod.OnPlayed)
-                if (tagMatch == "" || director.tag == tagMatch)
-                    InvokeCallbacks();
-        }
-
-        // Event Listener for Unity PlayableDirector
-        public void OnPaused(PlayableDirector director)
-        {
-            if (listener == ListenerMethod.OnPaused)
-                if (tagMatch == "" || director.tag == tagMatch)
-                    InvokeCallbacks();
-        }
-
-        // Event Listener for Unity PlayableDirector
-        public void OnStopped(PlayableDirector director)
-        {
-            if (listener == ListenerMethod.OnStopped)
-                if (tagMatch == "" || director.tag == tagMatch)
-                    InvokeCallbacks();
-        }
+        public void OnPlayed(PlayableDirector director) { CheckMatch(ListenerMethod.OnPlayed, director.tag); }
+        public void OnPaused(PlayableDirector director) { CheckMatch(ListenerMethod.OnPaused, director.tag); }
+        public void OnStopped(PlayableDirector director) { CheckMatch(ListenerMethod.OnStopped, director.tag); }
 
         // Invokes callbacks directly
         public void InvokeCallbacks()
