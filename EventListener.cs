@@ -104,10 +104,10 @@ namespace EventListenerTools
         public Callback[] callbacks;    // methods to call
 
         // Check logic for each listener and tag combination
-        public void CheckMatch(ListenerMethod listener, string tag)
+        public void CheckMatch(ListenerMethod listener, Transform actor)
         {
             if (this.listener == listener)
-                if (tagMatch == "" || tagMatch == tag)
+                if (tagMatch == "" || tagMatch == actor.tag)
                     InvokeCallbacks();
         }
 
@@ -171,34 +171,34 @@ namespace EventListenerTools
         public void OnDisable() { CheckMatch(ListenerMethod.OnDisable, null); }
 
         // Message Listeners for Dialogue System for Unity (PixelCrushers)
-        public void OnUse(Transform actor) { CheckMatch(ListenerMethod.OnUse, actor.tag); }
-        public void OnBarkStart(Transform actor) { CheckMatch(ListenerMethod.OnBarkStart, actor.tag); }
-        public void OnBarkEnd(Transform actor) { CheckMatch(ListenerMethod.OnBarkEnd, actor.tag); }
-        public void OnConversationStart(Transform actor) { CheckMatch(ListenerMethod.OnConversationStart, actor.tag); }
-        public void OnConversationEnd(Transform actor) { CheckMatch(ListenerMethod.OnConversationEnd, actor.tag); }
-        public void OnSequenceStart(Transform actor) { CheckMatch(ListenerMethod.OnSequenceStart, actor.tag); }
-        public void OnSequenceEnd(Transform actor) { CheckMatch(ListenerMethod.OnSequenceEnd, actor.tag); }
+        public void OnUse(Transform actor) { CheckMatch(ListenerMethod.OnUse, actor); }
+        public void OnBarkStart(Transform actor) { CheckMatch(ListenerMethod.OnBarkStart, actor); }
+        public void OnBarkEnd(Transform actor) { CheckMatch(ListenerMethod.OnBarkEnd, actor); }
+        public void OnConversationStart(Transform actor) { CheckMatch(ListenerMethod.OnConversationStart, actor); }
+        public void OnConversationEnd(Transform actor) { CheckMatch(ListenerMethod.OnConversationEnd, actor); }
+        public void OnSequenceStart(Transform actor) { CheckMatch(ListenerMethod.OnSequenceStart, actor); }
+        public void OnSequenceEnd(Transform actor) { CheckMatch(ListenerMethod.OnSequenceEnd, actor); }
 
         // Message Listeners for Unity Collider
-        public void OnTriggerStay(Collider other) { CheckMatch(ListenerMethod.OnTriggerStay, other.tag); }
-        public void OnTriggerEnter(Collider other) { CheckMatch(ListenerMethod.OnTriggerEnter, other.tag); }
-        public void OnTriggerExit(Collider other) { CheckMatch(ListenerMethod.OnTriggerExit, other.tag); }
-        public void OnCollisionStay(Collision collision) { CheckMatch(ListenerMethod.OnCollisionStay, collision.gameObject.tag); }
-        public void OnCollisionEnter(Collision collision) { CheckMatch(ListenerMethod.OnCollisionEnter, collision.gameObject.tag); }
-        public void OnCollisionExit(Collision collision) { CheckMatch(ListenerMethod.OnCollisionExit, collision.gameObject.tag); }
+        public void OnTriggerStay(Collider other) { CheckMatch(ListenerMethod.OnTriggerStay, other.transform); }
+        public void OnTriggerEnter(Collider other) { CheckMatch(ListenerMethod.OnTriggerEnter, other.transform); }
+        public void OnTriggerExit(Collider other) { CheckMatch(ListenerMethod.OnTriggerExit, other.transform); }
+        public void OnCollisionStay(Collision collision) { CheckMatch(ListenerMethod.OnCollisionStay, collision.transform); }
+        public void OnCollisionEnter(Collision collision) { CheckMatch(ListenerMethod.OnCollisionEnter, collision.transform); }
+        public void OnCollisionExit(Collision collision) { CheckMatch(ListenerMethod.OnCollisionExit, collision.transform); }
 
         // Message Listeners for Unity Collider2D
-        public void OnTriggerStay2D(Collider2D other) { CheckMatch(ListenerMethod.OnTriggerStay2D, other.gameObject.tag); }
-        public void OnTriggerEnter2D(Collider2D other) { CheckMatch(ListenerMethod.OnTriggerEnter2D, other.gameObject.tag); }
-        public void OnTriggerExit2D(Collider2D other) { CheckMatch(ListenerMethod.OnTriggerExit2D, other.gameObject.tag); }
-        public void OnCollisionStay2D(Collision2D collision) { CheckMatch(ListenerMethod.OnCollisionStay2D, collision.gameObject.tag); }
-        public void OnCollisionEnter2D(Collision2D collision) { CheckMatch(ListenerMethod.OnCollisionEnter2D, collision.gameObject.tag); }
-        public void OnCollisionExit2D(Collision2D collision) { CheckMatch(ListenerMethod.OnCollisionExit2D, collision.gameObject.tag); }
+        public void OnTriggerStay2D(Collider2D other) { CheckMatch(ListenerMethod.OnTriggerStay2D, other.transform); }
+        public void OnTriggerEnter2D(Collider2D other) { CheckMatch(ListenerMethod.OnTriggerEnter2D, other.transform); }
+        public void OnTriggerExit2D(Collider2D other) { CheckMatch(ListenerMethod.OnTriggerExit2D, other.transform); }
+        public void OnCollisionStay2D(Collision2D collision) { CheckMatch(ListenerMethod.OnCollisionStay2D, collision.transform); }
+        public void OnCollisionEnter2D(Collision2D collision) { CheckMatch(ListenerMethod.OnCollisionEnter2D, collision.transform); }
+        public void OnCollisionExit2D(Collision2D collision) { CheckMatch(ListenerMethod.OnCollisionExit2D, collision.transform); }
 
         // Event Listeners for Unity PlayableDirector
-        public void OnPlayed(PlayableDirector director) { CheckMatch(ListenerMethod.OnPlayed, director.tag); }
-        public void OnPaused(PlayableDirector director) { CheckMatch(ListenerMethod.OnPaused, director.tag); }
-        public void OnStopped(PlayableDirector director) { CheckMatch(ListenerMethod.OnStopped, director.tag); }
+        public void OnPlayed(PlayableDirector director) { CheckMatch(ListenerMethod.OnPlayed, director.transform); }
+        public void OnPaused(PlayableDirector director) { CheckMatch(ListenerMethod.OnPaused, director.transform); }
+        public void OnStopped(PlayableDirector director) { CheckMatch(ListenerMethod.OnStopped, director.transform); }
 
         // Invokes callbacks directly
         public void InvokeCallbacks()
