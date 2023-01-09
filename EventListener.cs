@@ -238,10 +238,10 @@ namespace EventListenerTools
                     MethodInfo methodInfo = component.GetType().GetMethod(callback.methodName, types);
                     methodInfo.Invoke(component, arguments);
                 }
-                // Static non-instance call for MonoScript types
-                else if (obj is MonoScript monoScript)
+                // Static non-instance call for non-gameobject types
+                else
                 {
-                    MethodInfo methodInfo = monoScript.GetClass().GetMethod(callback.methodName, types);
+                    MethodInfo methodInfo = Type.GetType(callback.assemblyName).GetMethod(callback.methodName, types);
                     methodInfo.Invoke(null, arguments);
                 }
             }
