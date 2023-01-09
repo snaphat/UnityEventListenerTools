@@ -231,17 +231,19 @@ namespace EventListenerTools
 
                 // Call method
                 var obj = callback.objectReference;
-                // Iinstance call for GameObject types
+                // Instance call for GameObject types
                 if (obj is GameObject gameObject)
                 {
                     var component = gameObject.GetComponentInChildren(Type.GetType(callback.assemblyName));
-                    MethodInfo methodInfo = component.GetType().GetMethod(callback.methodName, types);
+                    const BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+                    MethodInfo methodInfo = component.GetType().GetMethod(callback.methodName, bindingFlags, null, types, null);
                     methodInfo.Invoke(component, arguments);
                 }
                 // Static non-instance call for non-gameobject types
                 else
                 {
-                    MethodInfo methodInfo = Type.GetType(callback.assemblyName).GetMethod(callback.methodName, types);
+                    const BindingFlags bindingFlags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+                    MethodInfo methodInfo = Type.GetType(callback.assemblyName).GetMethod(callback.methodName, bindingFlags, null, types, null);
                     methodInfo.Invoke(null, arguments);
                 }
             }
