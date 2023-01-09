@@ -312,6 +312,7 @@ namespace EventListenerTools
         }
         Dictionary<int, EditorCache> editorCache;
         ReorderableList cachedMethodList; // object + method pairs in a reorderable list
+        int cachedMethodListCount; // element count in cachedMethodList
 
         // Properties
         SerializedProperty m_Listener;
@@ -344,7 +345,7 @@ namespace EventListenerTools
                 //EditorGUILayout.Space();
 
                 // Only rebuild list if something as changed (it isn't draggable otherwise)
-                if (cachedMethodList == null)
+                if (cachedMethodList == null || cachedMethodListCount != cachedMethodList.count)
                 {
                     cachedMethodList = new ReorderableList(serializedObject, m_Callbacks, true, true, true, true)
                     {
@@ -352,6 +353,7 @@ namespace EventListenerTools
                         drawElementCallback = DrawMethodAndArguments,
                         drawHeaderCallback = delegate (Rect rect) { EditorGUI.LabelField(rect, "Object Methods"); }
                     };
+                    cachedMethodListCount = cachedMethodList.count;
                     editorCache = new();
                 }
 
