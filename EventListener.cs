@@ -98,6 +98,16 @@ namespace EventListenerTools
         public Argument[] arguments;
     }
 
+    class MethodExecuter : MonoBehaviour
+    {
+        public static MethodExecuter instance;
+
+        public void Awake()
+        {
+            instance = this;
+        }
+    }
+
     class EventListener : MonoBehaviour
     {
         public ListenerMethod listener; // listener method
@@ -143,6 +153,9 @@ namespace EventListenerTools
         // Message Listeners for MonoBehaviours
         public void Awake()
         {
+            if (MethodExecuter.instance == null)
+                new GameObject("EventListenerMethodExecuter", typeof(MethodExecuter)).GetComponent<MethodExecuter>();
+
             AddListener();
 
             // PlayOnAwake/Play workaround bc played events are trigger before we registered ours if it woke up before us
@@ -204,49 +217,58 @@ namespace EventListenerTools
         public void InvokeCallbacks()
         {
             if (callbacks == null) return;
-
-            foreach (var callback in callbacks)
+            IEnumerator InvokeCallbacks()
             {
-                // Setup arguments
-                object[] arguments = new object[callback.arguments.Length];
-                Type[] types = new Type[callback.arguments.Length];
-                for (int i = 0; i < arguments.Length; i++)
+                foreach (var callback in callbacks)
                 {
-                    var argument = callback.arguments[i];
-                    if (argument.parameterType == ParameterType.Bool)
-                        arguments[i] = argument.Bool;
-                    else if (argument.parameterType == ParameterType.Int)
-                        arguments[i] = argument.Int;
-                    else if (argument.parameterType == ParameterType.Float)
-                        arguments[i] = argument.Float;
-                    else if (argument.parameterType == ParameterType.Object)
-                        arguments[i] = argument.Object;
-                    else if (argument.parameterType == ParameterType.String)
-                        arguments[i] = argument.String;
-                    else if (argument.parameterType == ParameterType.Enum)
-                        arguments[i] = Enum.ToObject(Type.GetType(argument.String + ",Assembly-CSharp"), argument.Int);
+                    // Setup arguments
+                    object[] arguments = new object[callback.arguments.Length];
+                    Type[] types = new Type[callback.arguments.Length];
+                    for (int i = 0; i < arguments.Length; i++)
+                    {
+                        var argument = callback.arguments[i];
+                        if (argument.parameterType == ParameterType.Bool)
+                            arguments[i] = argument.Bool;
+                        else if (argument.parameterType == ParameterType.Int)
+                            arguments[i] = argument.Int;
+                        else if (argument.parameterType == ParameterType.Float)
+                            arguments[i] = argument.Float;
+                        else if (argument.parameterType == ParameterType.Object)
+                            arguments[i] = argument.Object;
+                        else if (argument.parameterType == ParameterType.String)
+                            arguments[i] = argument.String;
+                        else if (argument.parameterType == ParameterType.Enum)
+                            arguments[i] = Enum.ToObject(Type.GetType(argument.String + ",Assembly-CSharp"), argument.Int);
 
-                    types[i] = arguments[i].GetType();
-                }
+                        types[i] = arguments[i].GetType();
+                    }
 
-                // Call method
-                var obj = callback.objectReference;
-                // Instance call for GameObject types
-                if (obj is GameObject gameObject)
-                {
-                    var component = gameObject.GetComponentInChildren(Type.GetType(callback.assemblyName));
-                    const BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
-                    MethodInfo methodInfo = component.GetType().GetMethod(callback.methodName, bindingFlags, null, types, null);
-                    methodInfo.Invoke(component, arguments);
-                }
-                // Static non-instance call for non-gameobject types
-                else
-                {
-                    const BindingFlags bindingFlags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
-                    MethodInfo methodInfo = Type.GetType(callback.assemblyName).GetMethod(callback.methodName, bindingFlags, null, types, null);
-                    methodInfo.Invoke(null, arguments);
+                    // Call method
+                    var obj = callback.objectReference;
+                    // Instance call for GameObject types
+                    if (obj is GameObject gameObject)
+                    {
+                        var component = gameObject.GetComponentInChildren(Type.GetType(callback.assemblyName));
+                        const BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+                        MethodInfo methodInfo = component.GetType().GetMethod(callback.methodName, bindingFlags, null, types, null);
+                        if (methodInfo.ReturnType != typeof(IEnumerator))
+                            methodInfo.Invoke(component, arguments);
+                        else
+                            yield return MethodExecuter.instance.StartCoroutine((IEnumerator)methodInfo.Invoke(component, arguments));
+                    }
+                    // Static non-instance call for non-gameobject types
+                    else
+                    {
+                        const BindingFlags bindingFlags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+                        MethodInfo methodInfo = Type.GetType(callback.assemblyName).GetMethod(callback.methodName, bindingFlags, null, types, null);
+                        if (methodInfo.ReturnType != typeof(IEnumerator))
+                            methodInfo.Invoke(null, arguments);
+                        else
+                            yield return MethodExecuter.instance.StartCoroutine((IEnumerator)methodInfo.Invoke(null, arguments));
+                    }
                 }
             }
+            MethodExecuter.instance.StartCoroutine(InvokeCallbacks());
         }
     }
 
