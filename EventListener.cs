@@ -112,6 +112,7 @@ namespace EventListenerTools
     {
         public ListenerMethod listener; // listener method
         public string tagMatch = "";    // Tag Match check
+        public bool bindOtherObject;    // Whether to bind the other object causing the event to trigger
         public Callback[] callbacks;    // methods to call
 
         // Check logic for each listener and tag combination
@@ -119,7 +120,7 @@ namespace EventListenerTools
         {
             if (this.listener == listener)
                 if (tagMatch == "" || (actor != null && tagMatch == actor.tag))
-                    InvokeCallbacks();
+                    InvokeCallbacks(actor.gameObject);
         }
 
         // Add Event listener for PlayableDirector Events
@@ -214,7 +215,7 @@ namespace EventListenerTools
         public void OnStopped(PlayableDirector director) { CheckMatch(ListenerMethod.OnStopped, director.transform); }
 
         // Invokes callbacks directly
-        public void InvokeCallbacks()
+        public void InvokeCallbacks(Object obj)
         {
             if (callbacks == null) return;
             IEnumerator InvokeCallbacks()
@@ -244,7 +245,8 @@ namespace EventListenerTools
                     }
 
                     // Call method
-                    var obj = callback.objectReference;
+                    if (bindOtherObject == false)
+                        obj = callback.objectReference;
                     // Instance call for GameObject types
                     if (obj is GameObject gameObject)
                     {
@@ -340,6 +342,7 @@ namespace EventListenerTools
         // Properties
         SerializedProperty m_Listener;
         SerializedProperty m_TagMatch;
+        SerializedProperty m_bindOtherObject;
         SerializedProperty m_Callbacks;
 
         // Get serialized object properties (for UI)
@@ -348,6 +351,7 @@ namespace EventListenerTools
             // Functional properties
             m_Listener = serializedObject.FindProperty("listener");
             m_TagMatch = serializedObject.FindProperty("tagMatch");
+            m_bindOtherObject = serializedObject.FindProperty("bindOtherObject");
             m_Callbacks = serializedObject.FindProperty("callbacks");
         }
 
@@ -366,6 +370,12 @@ namespace EventListenerTools
                 m_TagMatch.stringValue = EditorGUILayout.TagField("Tag", m_TagMatch.stringValue);
                 if (m_TagMatch.stringValue == "Untagged") m_TagMatch.stringValue = "";
                 //EditorGUILayout.Space();
+
+                // Draw bind other object field
+                bool cachebindOtherObject = m_bindOtherObject.boolValue;
+                EditorGUILayout.PropertyField(m_bindOtherObject);
+                if (cachebindOtherObject != m_bindOtherObject.boolValue)
+                    cachedMethodList = null;
 
                 // Only rebuild list if something as changed (it isn't draggable otherwise)
                 if (cachedMethodList == null)
@@ -437,7 +447,7 @@ namespace EventListenerTools
             if (obj != cache.obj)
             {
                 // Update supported methods
-                cache.supportedMethods = CollectSupportedMethods(obj);
+                cache.supportedMethods = CollectSupportedMethods(obj, m_bindOtherObject.boolValue);
 
                 // Get current method ID based off of stored name (index really)
                 cache.selectedMethodId = cache.supportedMethods.FindMethod(m_AssemblyName, m_MethodName, m_Arguments);
@@ -574,7 +584,7 @@ namespace EventListenerTools
         }
 
         // Helper method for retrieving method signatures from an Object
-        public static List<CallbackDescription> CollectSupportedMethods(Object obj)
+        public static List<CallbackDescription> CollectSupportedMethods(Object obj, bool bindOtherObject)
         {
             // return if object is null
             if (obj == null) return Enumerable.Empty<CallbackDescription>().ToList();
@@ -598,8 +608,8 @@ namespace EventListenerTools
                 // Loop over type for derived type up the entire inheritence hierarchy 
                 while (itemType != null)
                 {
-                    // Get methods for class type. Include instance methods if the type is a game object or component
-                    var methods = itemType.GetMethods((item is GameObject || item is Component ? BindingFlags.Instance : 0) | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                    // Get methods for class type. Include instance methods if the type is a game object or component or set to bind the other object
+                    var methods = itemType.GetMethods((item is GameObject || item is Component || bindOtherObject ? BindingFlags.Instance : 0) | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
 
                     foreach (var method in methods)
                     {
